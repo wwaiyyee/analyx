@@ -58,6 +58,7 @@ htmlcov/
 
 # Backend data
 /data/
+.llm_cache/
 *.parquet
 *.db
 *.sqlite
