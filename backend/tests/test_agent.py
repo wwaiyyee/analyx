@@ -13,6 +13,7 @@ from backend.agent.orchestrator import run_orchestrator
 from backend.agent.prompts import wrap_untrusted_data
 from backend.agent.router import route_request
 from backend.agent.tools import ToolExecutor
+from backend.config import settings
 from backend.db.models import AnalysisSession, Dataset, DatasetVersion, Workspace
 from backend.db.session import engine, init_db
 from backend.ingest.normalize import normalize_dataset
@@ -166,27 +167,13 @@ async def test_orchestrator_loop_and_budget_stop() -> None:
         db.refresh(ses)
 
         # Fake provider looping tools until budget limit
+        budget = settings.budget_lookup_tool_calls
         canned = [
             LLMResponse(
                 content="",
-                tool_calls=[ToolCall(id="c1", name="list_datasets", arguments={})],
-            ),
-            LLMResponse(
-                content="",
-                tool_calls=[ToolCall(id="c2", name="list_datasets", arguments={})],
-            ),
-            LLMResponse(
-                content="",
-                tool_calls=[ToolCall(id="c3", name="list_datasets", arguments={})],
-            ),
-            LLMResponse(
-                content="",
-                tool_calls=[ToolCall(id="c4", name="list_datasets", arguments={})],
-            ),
-            LLMResponse(
-                content="",
-                tool_calls=[ToolCall(id="c5", name="list_datasets", arguments={})],
-            ),
+                tool_calls=[ToolCall(id=f"c{i}", name="list_datasets", arguments={})],
+            )
+            for i in range(budget + 2)
         ]
         provider = FakeLLMProvider(canned_responses=canned)
 
