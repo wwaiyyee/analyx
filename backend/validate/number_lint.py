@@ -79,7 +79,7 @@ def extract_numeric_tokens(text: str) -> list[NumberToken]:
     # Regex captures:
     # (prefix $, +, -)? (\d+(?:,\d{3})*(?:\.\d+)?) (\s*(?:k|m|b|t|thousand|million|billion|trillion|%))?
     pattern = re.compile(
-        r"(?P<prefix>[\$€£\+\-])?\s*(?P<num>\d+(?:,\d{3})*(?:\.\d+)?)\s*(?P<suffix>%|k|m|b|t|thousand|million|billion|trillion)?\b",
+        r"(?P<prefix>[\$€£\+\-])?\s*(?P<num>\d+(?:,\d{3})*(?:\.\d+)?)\s*(?P<suffix>%|k|m|b|t|thousand|million|billion|trillion)?(?!\w)",
         re.IGNORECASE,
     )
 
