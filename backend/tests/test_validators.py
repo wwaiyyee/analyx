@@ -42,9 +42,9 @@ def test_number_lint_exact_and_tolerance_match() -> None:
 
 def test_number_lint_ignores_dates_and_ordinals() -> None:
     metrics = {"volume": "5000"}
-    # 2026, Q3, 1st, 2nd, `col_name` should all be ignored
+    # 2026, Q3, 1st, 2nd, August 1, 2026, `col_name` should all be ignored
     text = (
-        "During Q3 in 2026, the 1st and 2nd batches of `run_id_99` "
+        "As of August 1, 2026, during Q3 in 2026, the 1st and 2nd batches of `run_id_99` "
         "reached 5,000 units."
     )
     res = lint_numbers(text, metrics)
