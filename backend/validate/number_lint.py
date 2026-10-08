@@ -49,9 +49,22 @@ def _clean_text_for_lint(text: str) -> str:
     # Strip date patterns (YYYY-MM-DD, YYYY/MM/DD, DD/MM/YYYY)
     cleaned = re.sub(r"\b\d{4}[-/]\d{2}[-/]\d{2}\b", " ", cleaned)
     cleaned = re.sub(r"\b\d{2}[-/]\d{2}[-/]\d{4}\b", " ", cleaned)
-    # Strip month names with 4-digit years (e.g. August 2026, Aug 2026)
+    # Strip month names with days and/or 4-digit years (e.g. August 1, 2026, August 1st, Aug 2026, 1 August 2026)
+    _MONTHS = r"(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)"
     cleaned = re.sub(
-        r"\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{4}\b",
+        rf"\b{_MONTHS}\s+\d{{1,2}}(?:st|nd|rd|th)?(?:,?\s+\d{{4}})?\b",
+        " ",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    cleaned = re.sub(
+        rf"\b\d{{1,2}}(?:st|nd|rd|th)?\s+{_MONTHS}(?:,?\s+\d{{4}})?\b",
+        " ",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    cleaned = re.sub(
+        rf"\b{_MONTHS}\s+\d{{4}}\b",
         " ",
         cleaned,
         flags=re.IGNORECASE,
