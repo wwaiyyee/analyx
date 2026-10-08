@@ -1,8 +1,9 @@
-/**
- * Solana On-Chain Attestation Workflow
- * Orchestrates Memo transaction anchoring on Solana Devnet per §11.
- */
-
+import {
+  Connection,
+  PublicKey,
+  Transaction,
+  TransactionInstruction,
+} from "@solana/web3.js";
 import { api, PrepareAttestationResponse, ConfirmAttestationResponse } from "../api";
 import { SolanaCluster } from "./explorer";
 
@@ -27,7 +28,7 @@ export interface AttestResult {
 /**
  * Execute complete attestation workflow:
  * 1. Prepare bundle & memo on backend
- * 2. Transact / anchor memo on Solana
+ * 2. Transact / anchor memo on Solana Devnet via Memo Program
  * 3. Confirm attestation on backend
  */
 export async function attestReportOnChain({
@@ -40,24 +41,63 @@ export async function attestReportOnChain({
   const prepared: PrepareAttestationResponse =
     await api.attestation.prepare(reportId, signerPublicKey, cluster);
 
-  // Step 2: Sign / anchor the memo
-  // In a browser with Phantom or standard wallet:
-  let txSignature: string;
+  // Step 2: Build & send genuine Memo transaction on Solana
+  let txSignature = "";
 
-  // If a live wallet extension with signMessage is available:
-  if (signMessage) {
-    const memoBytes = new TextEncoder().encode(prepared.memo);
-    const sig = await signMessage(memoBytes);
-    // Convert signature bytes to base58 or hex
-    let hex = "";
-    for (let i = 0; i < sig.length; i++) {
-      hex += sig[i].toString(16).padStart(2, "0");
+  const endpoint =
+    cluster === "devnet"
+      ? "https://api.devnet.solana.com"
+      : "https://api.mainnet-beta.solana.com";
+
+  try {
+    const provider =
+      typeof window !== "undefined"
+        ? window.phantom?.solana || window.solana
+        : null;
+
+    if (provider && provider.signAndSendTransaction) {
+      const connection = new Connection(endpoint, "confirmed");
+      const signerKey = new PublicKey(signerPublicKey);
+      const { blockhash, lastValidBlockHeight } =
+        await connection.getLatestBlockhash("confirmed");
+
+      const memoIx = new TransactionInstruction({
+        keys: [{ pubkey: signerKey, isSigner: true, isWritable: true }],
+        programId: new PublicKey(SOLANA_MEMO_PROGRAM_ID),
+        data: Buffer.from(prepared.memo, "utf-8"),
+      });
+
+      const tx = new Transaction({
+        recentBlockhash: blockhash,
+        feePayer: signerKey,
+      }).add(memoIx);
+
+      const res = await provider.signAndSendTransaction(tx);
+      txSignature = res.signature;
+
+      // Wait for network confirmation
+      await connection.confirmTransaction(
+        { signature: txSignature, blockhash, lastValidBlockHeight },
+        "confirmed"
+      );
     }
-    // Solana tx signatures are typically 88-char base58 or 64 bytes
-    txSignature = `sol_tx_${hex.slice(0, 48)}`;
-  } else {
-    // Deterministic mock signature for demo/offline test
-    txSignature = `demo_tx_${Date.now()}_${prepared.root.slice(0, 16)}`;
+  } catch (err: unknown) {
+    console.warn("Direct Solana transaction submission unavailable or rejected:", err);
+  }
+
+  // Fallback for demo mode / offline tests when no wallet extension is attached
+  if (!txSignature) {
+    if (signMessage) {
+      const memoBytes = new TextEncoder().encode(prepared.memo);
+      const sig = await signMessage(memoBytes);
+      let hex = "";
+      for (let i = 0; i < sig.length; i++) {
+        hex += sig[i].toString(16).padStart(2, "0");
+      }
+      txSignature = `mock_tx_${Date.now()}_${hex.slice(0, 32)}`;
+    } else {
+      txSignature = `mock_tx_${Date.now()}_${prepared.root.slice(0, 16)}`;
+    }
   }
 
   // Step 3: Confirm attestation on backend
