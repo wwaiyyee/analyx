@@ -1,6 +1,6 @@
 "use client";
 
-import React, { use, useEffect, useState } from "react";
+import React, { Suspense, use, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { api, ReportItem } from "@/lib/api";
@@ -22,7 +22,7 @@ interface ReportDetailPageProps {
   params: Promise<{ id: string }>;
 }
 
-export default function ReportDetailPage({ params }: ReportDetailPageProps) {
+function ReportDetailContent({ params }: ReportDetailPageProps) {
   const resolvedParams = use(params);
   const reportId = resolvedParams.id;
   const searchParams = useSearchParams();
@@ -203,5 +203,19 @@ export default function ReportDetailPage({ params }: ReportDetailPageProps) {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ReportDetailPage({ params }: ReportDetailPageProps) {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center bg-[#090a0f]">
+          <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
+        </div>
+      }
+    >
+      <ReportDetailContent params={params} />
+    </Suspense>
   );
 }
