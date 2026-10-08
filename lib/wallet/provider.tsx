@@ -50,26 +50,34 @@ const DEMO_WALLET_PUBLIC_KEY = "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU";
 
 export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [publicKey, setPublicKey] = useState<string | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [workspaceId, setWorkspaceId] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(() => getStoredToken());
+  const [workspaceId, setWorkspaceId] = useState<string | null>(() => getStoredWorkspaceId());
   const [connecting, setConnecting] = useState<boolean>(false);
   const [cluster, setCluster] = useState<"devnet" | "mainnet-beta">("devnet");
-
-  // Restore stored session if exists
-  useEffect(() => {
-    const existingToken = getStoredToken();
-    const existingWs = getStoredWorkspaceId();
-    if (existingToken) {
-      setToken(existingToken);
-      if (existingWs) setWorkspaceId(existingWs);
-    }
-  }, []);
 
   const getProvider = useCallback((): PhantomProvider | null => {
     if (typeof window === "undefined") return null;
     if (window.phantom?.solana?.isPhantom) return window.phantom.solana;
     if (window.solana) return window.solana;
     return null;
+  }, []);
+
+  const connectDemo = useCallback(async () => {
+    setConnecting(true);
+    try {
+      setPublicKey(DEMO_WALLET_PUBLIC_KEY);
+      try {
+        const authRes = await api.auth.demo();
+        setToken(authRes.token);
+        setWorkspaceId(authRes.workspace_id);
+      } catch (err) {
+        console.warn("Backend demo login failed, fallback to local:", err);
+        setToken("demo_token_workspace");
+        setWorkspaceId("ws_demo_analyx");
+      }
+    } finally {
+      setConnecting(false);
+    }
   }, []);
 
   const connect = useCallback(async () => {
@@ -102,25 +110,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setConnecting(false);
     }
-  }, [getProvider]);
-
-  const connectDemo = useCallback(async () => {
-    setConnecting(true);
-    try {
-      setPublicKey(DEMO_WALLET_PUBLIC_KEY);
-      try {
-        const authRes = await api.auth.demo();
-        setToken(authRes.token);
-        setWorkspaceId(authRes.workspace_id);
-      } catch (err) {
-        console.warn("Backend demo login failed, fallback to local:", err);
-        setToken("demo_token_workspace");
-        setWorkspaceId("ws_demo_analyx");
-      }
-    } finally {
-      setConnecting(false);
-    }
-  }, []);
+  }, [getProvider, connectDemo]);
 
   const disconnect = useCallback(() => {
     clearStoredToken();
