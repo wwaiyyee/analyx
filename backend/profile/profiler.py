@@ -8,6 +8,8 @@ import pandas as pd
 
 def _is_numeric_series(series: pd.Series) -> bool:
     """Check if pandas series contains numeric values."""
+    if pd.api.types.is_bool_dtype(series):
+        return False
     if pd.api.types.is_numeric_dtype(series):
         return True
     # Try converting non-null values
