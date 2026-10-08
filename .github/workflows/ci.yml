@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [main, wy]
+  pull_request:
+    branches: [main, wy]
+
+jobs:
+  frontend-check:
+    name: Frontend Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript typecheck
+        run: npx tsc --noEmit
+
+  backend-tests:
+    name: Backend Tests & P0 Evals
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install fastapi uvicorn sqlmodel duckdb pandas pyarrow pynacl base58 pyjwt pytest pytest-asyncio pyyaml anthropic httpx pydantic-settings
+
+      - name: Run Pytest test suite
+        run: pytest backend/tests -v
+
+      - name: Run P0 evaluation benchmarks
+        run: python evals/run_evals.py
