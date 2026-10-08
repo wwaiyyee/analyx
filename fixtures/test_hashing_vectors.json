@@ -1,0 +1,127 @@
+[
+  {
+    "name": "empty_object",
+    "input": {},
+    "reject_float": false,
+    "canonical_json": "{}",
+    "hash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+  },
+  {
+    "name": "empty_array",
+    "input": [],
+    "reject_float": false,
+    "canonical_json": "[]",
+    "hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+    "name": "simple_object",
+    "input": {
+      "a": 1,
+      "b": "hello"
+    },
+    "reject_float": false,
+    "canonical_json": "{\"a\":1,\"b\":\"hello\"}",
+    "hash": "d84ab9f85753473707229d00b92623f0f9a1b8b9bf69763fc5cfc692b56c236b"
+  },
+  {
+    "name": "key_order_permutation",
+    "input": {
+      "b": "hello",
+      "a": 1
+    },
+    "reject_float": false,
+    "canonical_json": "{\"a\":1,\"b\":\"hello\"}",
+    "hash": "d84ab9f85753473707229d00b92623f0f9a1b8b9bf69763fc5cfc692b56c236b"
+  },
+  {
+    "name": "unicode_strings",
+    "input": {
+      "greeting": "こんにちは世界",
+      "emoji": "🚀✨"
+    },
+    "reject_float": false,
+    "canonical_json": "{\"emoji\":\"🚀✨\",\"greeting\":\"こんにちは世界\"}",
+    "hash": "a3efeaee4c539f355bbf10c1804b697049e18c5f92e751fc84f80168bb5e98da"
+  },
+  {
+    "name": "escape_characters",
+    "input": {
+      "escapes": "line1\nline2\ttab\"quote\"\\slash"
+    },
+    "reject_float": false,
+    "canonical_json": "{\"escapes\":\"line1\\nline2\\ttab\\\"quote\\\"\\\\slash\"}",
+    "hash": "cce6f8a64de117c318640646c603e777b8107f45de1926c96a148f9e81216f67"
+  },
+  {
+    "name": "nested_structures",
+    "input": {
+      "nested": {
+        "arr": [
+          1,
+          2,
+          3
+        ],
+        "flag": true,
+        "null_val": null
+      }
+    },
+    "reject_float": false,
+    "canonical_json": "{\"nested\":{\"arr\":[1,2,3],\"flag\":true,\"null_val\":null}}",
+    "hash": "a7749922213192e63319f245cc4ce5398befe83e09d871e76dd5a9eaa21877c4"
+  },
+  {
+    "name": "key_sort_utf16",
+    "input": {
+      "1": 4,
+      "A": 1,
+      "a": 2,
+      "é": 3
+    },
+    "reject_float": false,
+    "canonical_json": "{\"1\":4,\"A\":1,\"a\":2,\"é\":3}",
+    "hash": "61735b9dfdd435496fdb7cc70fb2c6d282f32cb32f636d9cf75880ba2bbabadf"
+  },
+  {
+    "name": "realistic_bundle",
+    "input": {
+      "version": 1,
+      "report": {
+        "id": "rp_01m4test",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "signer": "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+      "created_at": "2026-10-08T12:00:00Z"
+    },
+    "reject_float": false,
+    "canonical_json": "{\"created_at\":\"2026-10-08T12:00:00Z\",\"report\":{\"id\":\"rp_01m4test\",\"sha256\":\"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"},\"signer\":\"7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU\",\"version\":1}",
+    "hash": "165de1c5b2d20bcb14fea2397cbde35f1cf29febb5e184e99094923031f0c4ac"
+  },
+  {
+    "name": "deep_nested_arrays",
+    "input": {
+      "matrix": [
+        [
+          1,
+          2
+        ],
+        [
+          3,
+          4
+        ]
+      ],
+      "active": false
+    },
+    "reject_float": false,
+    "canonical_json": "{\"active\":false,\"matrix\":[[1,2],[3,4]]}",
+    "hash": "9dc6f133c67971cec134cd7035877d3235f5708993af325b4d062ef931fbcba8"
+  },
+  {
+    "name": "float_rejection",
+    "input": {
+      "rate": 0.05
+    },
+    "reject_float": true,
+    "canonical_json": null,
+    "hash": null
+  }
+]
