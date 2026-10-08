@@ -82,12 +82,13 @@ export function DatasetSidebar({
 
     try {
       const res = await api.datasets.upload(file, file.name.replace(/\.[^/.]+$/, ""));
+      const dsId = res.dataset_id || res.dataset?.id || "";
       if (res.job_id) {
-        await pollJob(res.job_id, res.dataset_id);
+        await pollJob(res.job_id, dsId);
       } else {
         setUploading(false);
         setUploadProgress(null);
-        onDatasetAdded(res.dataset_id);
+        if (dsId) onDatasetAdded(dsId);
       }
     } catch (err: unknown) {
       setUploading(false);
