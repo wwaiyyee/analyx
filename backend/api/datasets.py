@@ -172,10 +172,10 @@ async def upload_dataset(
     out_dir = os.path.join(settings.data_dir, "datasets", dataset_id)
 
     try:
-        norm_result = normalize_dataset(
-            source=content,
+        df, transformations, schemas, c_hash, parquet_path, t_anchor = normalize_dataset(
             filename=filename,
-            output_dir=out_dir,
+            content=content,
+            dataset_id=dataset_id,
         )
     except Exception as exc:
         raise HTTPException(
@@ -188,8 +188,6 @@ async def upload_dataset(
             },
         ) from exc
 
-    # Load dataframe to profile and propose dictionary
-    df = pd.read_parquet(norm_result.parquet_path)
     profile = profile_dataset(df)
     dictionary_proposals = propose_dictionary(df, dataset_version_id=version_id)
 
@@ -201,25 +199,27 @@ async def upload_dataset(
         kind="xlsx" if ext in [".xlsx", ".xls"] else "csv",
     )
     session.add(dataset)
+    session.flush()
 
-    columns_data = [c.model_dump() for c in norm_result.columns]
-    transforms_data = [t.model_dump() for t in norm_result.transformations]
-    quality_data = norm_result.quality_report.model_dump()
+    columns_data = [c.model_dump() for c in schemas]
+    transforms_data = [t.model_dump() for t in transformations]
+    quality_data = {"stats": profile}
 
     version = DatasetVersion(
         id=version_id,
         dataset_id=dataset_id,
         version_num=1,
-        content_hash=norm_result.canonical_table_hash,
-        parquet_path=norm_result.parquet_path,
-        row_count=norm_result.row_count,
-        col_count=norm_result.col_count,
-        time_anchor=norm_result.time_anchor,
+        content_hash=c_hash,
+        parquet_path=parquet_path,
+        row_count=len(df),
+        col_count=len(df.columns),
+        time_anchor=t_anchor,
         columns_json=json.dumps(columns_data, default=str),
         transformations_json=json.dumps(transforms_data, default=str),
         quality_report_json=json.dumps(quality_data, default=str),
     )
     session.add(version)
+    session.flush()
 
     for prop in dictionary_proposals:
         entry = DataDictionaryEntry(
