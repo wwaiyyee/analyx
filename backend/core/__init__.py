@@ -12,6 +12,13 @@ from backend.core.errors import (
     SufficiencyError,
     ValidationError,
 )
+from backend.core.hashing import (
+    attestation_root,
+    canonical_table_hash,
+    hash_obj,
+    jcs,
+    sha256_hex,
+)
 from backend.core.ids import generate_id, is_valid_id, new_id
 
 __all__ = [
@@ -28,4 +35,9 @@ __all__ = [
     "AuthError",
     "NotFoundError",
     "BudgetExceededError",
+    "sha256_hex",
+    "jcs",
+    "hash_obj",
+    "canonical_table_hash",
+    "attestation_root",
 ]
