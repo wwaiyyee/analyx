@@ -92,11 +92,11 @@ def get_evidence_rows(
     table_map = {"main": version.parquet_path}
 
     metric_pack = load_metric_pack("treasury_v1")
-    compiled = compile_spec(spec, metric_pack)
+    sql, params = compile_spec(spec, metric_pack)
 
-    paged_sql = f"{compiled.sql} LIMIT {limit} OFFSET {offset}"
+    paged_sql = f"{sql} LIMIT {limit} OFFSET {offset}"
     try:
-        query_res = backend.execute_query(paged_sql, compiled.params, table_map)
+        query_res = backend.execute_query(paged_sql, params, table_map)
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
