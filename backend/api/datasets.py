@@ -16,7 +16,7 @@ from backend.core.ids import generate_id
 from backend.db.models import DataDictionaryEntry, Dataset, DatasetVersion, Job, Workspace
 from backend.db.session import get_session
 from backend.ingest.normalize import normalize_dataset
-from backend.onchain.normalize_transfers import normalize_onchain_transfers
+from backend.onchain.normalize_transfers import normalize_raw_batch
 from backend.onchain.rpc_source import RpcSource
 from backend.profile.profiler import profile_dataset
 from backend.semantic.dictionary import propose_dictionary
@@ -75,7 +75,7 @@ def _run_onchain_sync(
         session.commit()
 
         # Normalize transfers
-        df = normalize_onchain_transfers(batch.raw_transactions, wallet_address=address)
+        df = normalize_raw_batch(batch)
 
         # Output parquet
         dataset_id = generate_id("ds")
