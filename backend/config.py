@@ -7,9 +7,10 @@ class Settings(BaseSettings):
     """Analyx backend settings, loaded from environment variables."""
 
     # LLM
+    gemini_api_key: str = ""
     anthropic_api_key: str = ""
-    analyx_llm_model: str = "claude-sonnet-4-20250514"
-    analyx_llm_provider: str = "anthropic"
+    analyx_llm_model: str = "gemini-2.5-flash"
+    analyx_llm_provider: str = "gemini"
 
     # Solana
     solana_cluster: str = "devnet"
@@ -30,12 +31,12 @@ class Settings(BaseSettings):
     budget_investigation_tool_calls: int = 25
     budget_max_output_tokens: int = 4000
 
-    # Feature flags (P1)
-    feature_tee: bool = False
+    # Feature flags
+    feature_tee: bool = True
     feature_x402: bool = False
     feature_pdf: bool = False
 
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+    model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
 
 
 settings = Settings()
