@@ -1,7 +1,9 @@
 """Wallet-based ed25519 authentication endpoints and dependencies."""
 
-from datetime import datetime, timedelta, timezone
 import base64
+from datetime import datetime, timedelta, timezone
+import json
+from pathlib import Path
 import secrets
 from typing import Annotated, Optional
 
@@ -11,13 +13,25 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 import jwt
 import nacl.exceptions
 import nacl.signing
+import pandas as pd
 from pydantic import BaseModel, Field
 from sqlmodel import Session, select
 
 from backend.config import settings
 from backend.core.errors import AuthError
-from backend.db.models import Nonce, Workspace
+from backend.core.hashing import canonical_table_hash
+from backend.core.ids import generate_id
+from backend.core.time_anchor import get_last_complete_month
+from backend.db.models import (
+    DataDictionaryEntry,
+    Dataset,
+    DatasetVersion,
+    Nonce,
+    Workspace,
+)
 from backend.db.session import get_session
+from backend.profile.profiler import profile_dataset
+from backend.semantic.dictionary import propose_dictionary
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 security = HTTPBearer(auto_error=False)
@@ -238,20 +252,9 @@ def demo_login(
         session.refresh(workspace)
 
     # Pre-seed treasury fixture if no dataset exists
-    from backend.db.models import Dataset
     ds_stmt = select(Dataset).where(Dataset.workspace_id == workspace.id)
     existing_ds = session.exec(ds_stmt).first()
     if not existing_ds:
-        from pathlib import Path
-        import json
-        import pandas as pd
-        from backend.core.ids import generate_id
-        from backend.core.hashing import canonical_table_hash
-        from backend.core.time_anchor import get_last_complete_month
-        from backend.db.models import DatasetVersion, DataDictionaryEntry
-        from backend.profile.profiler import profile_dataset
-        from backend.semantic.dictionary import propose_dictionary
-
         fixture_csv = Path("fixtures/treasury_sample.csv")
         if fixture_csv.exists():
             df = pd.read_csv(fixture_csv)
