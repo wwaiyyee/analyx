@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { BarChart3, Table, Search, ExternalLink, Loader2 } from "lucide-react";
+import { BarChart3, Table, Search, Loader2 } from "lucide-react";
 
 interface VegaWrapperProps {
   spec: Record<string, unknown> | string;
@@ -80,7 +80,7 @@ export function VegaWrapper({
         };
 
         try {
-          await embed(containerRef.current, specToRender as any, {
+          await embed(containerRef.current, specToRender as never, {
             actions: false,
             renderer: "svg",
           });
