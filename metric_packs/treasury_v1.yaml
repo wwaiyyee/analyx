@@ -1,0 +1,57 @@
+pack: treasury_v1
+description: Financial metrics for Solana onchain_transfers treasury tables
+requires_table: onchain_transfers
+metrics:
+  inflow_usd:
+    sql: "COALESCE(SUM(CASE WHEN direction = 'in' AND tx_status = 'success' THEN CAST(amount_usd AS DOUBLE) ELSE 0 END), 0)"
+    requires:
+      - direction
+      - amount_usd
+      - tx_status
+    description: "Total inbound funds transferred in USD"
+    unit: USD
+
+  outflow_usd:
+    sql: "COALESCE(SUM(CASE WHEN direction = 'out' AND tx_status = 'success' THEN CAST(amount_usd AS DOUBLE) ELSE 0 END), 0)"
+    requires:
+      - direction
+      - amount_usd
+      - tx_status
+    description: "Total outbound funds spent or transferred in USD"
+    unit: USD
+
+  net_flow_usd:
+    sql: "COALESCE(SUM(CASE WHEN tx_status = 'success' THEN (CASE WHEN direction = 'in' THEN CAST(amount_usd AS DOUBLE) ELSE -CAST(amount_usd AS DOUBLE) END) ELSE 0 END), 0)"
+    requires:
+      - direction
+      - amount_usd
+      - tx_status
+    description: "Net cash flow in USD (inflows minus outflows)"
+    unit: USD
+
+  tx_count:
+    sql: "COUNT(DISTINCT CASE WHEN tx_status = 'success' THEN tx_signature END)"
+    requires:
+      - tx_signature
+      - tx_status
+    description: "Number of distinct successful transactions"
+    unit: count
+
+  unique_counterparties:
+    sql: "COUNT(DISTINCT CASE WHEN tx_status = 'success' AND counterparty IS NOT NULL THEN counterparty END)"
+    requires:
+      - counterparty
+      - tx_status
+    description: "Number of unique counterparties transacted with"
+    unit: count
+
+  runway_months:
+    sql: ""
+    requires:
+      - direction
+      - amount_usd
+      - tx_status
+    description: "Estimated runway in months based on treasury balance and average monthly net burn"
+    unit: months
+    is_derived: true
+    derivation_rule: "treasury_balance_usd / avg_monthly_net_burn"
