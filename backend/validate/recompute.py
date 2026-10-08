@@ -32,8 +32,13 @@ def recompute_spec(
         spec = AnalysisSpec.model_validate(spec)
 
     exec_backend = backend or LocalBackend()
-    metric_pack = load_metric_pack(metric_pack_name)
-    sql, params = compile_spec(spec, metric_pack)
+    load_metric_pack(metric_pack_name)
+    table_alias = "t"
+    sql, params = compile_spec(spec, table_name=table_alias)
+
+    # If table_map has only 1 entry and key is not 't', bind it to 't'
+    if len(table_map) == 1 and table_alias not in table_map:
+        table_map = {table_alias: next(iter(table_map.values()))}
 
     query_res = exec_backend.execute_query(
         sql=sql,
