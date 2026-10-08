@@ -41,9 +41,9 @@ export function AttestButton({
     if (!activeKey) {
       try {
         await connect();
-        activeKey = publicKey || "Analyx111111111111111111111111111111111111";
+        activeKey = publicKey || "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU";
       } catch {
-        activeKey = "Analyx111111111111111111111111111111111111";
+        activeKey = "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU";
       }
     }
 
