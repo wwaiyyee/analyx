@@ -1,0 +1,39 @@
+pack: generic_v1
+description: Generic domain-agnostic tabular aggregations
+requires_table: any
+metrics:
+  row_count:
+    sql: "COUNT(*)"
+    requires: []
+    description: "Total number of matching rows"
+    unit: count
+
+  distinct_count:
+    sql: "COUNT(DISTINCT {column})"
+    requires: []
+    description: "Distinct values of specified dimension"
+    unit: count
+
+  sum_amount:
+    sql: "SUM(CAST({column} AS DOUBLE))"
+    requires: []
+    description: "Sum of numeric column"
+    unit: null
+
+  avg_amount:
+    sql: "AVG(CAST({column} AS DOUBLE))"
+    requires: []
+    description: "Average of numeric column"
+    unit: null
+
+  min_amount:
+    sql: "MIN(CAST({column} AS DOUBLE))"
+    requires: []
+    description: "Minimum of numeric column"
+    unit: null
+
+  max_amount:
+    sql: "MAX(CAST({column} AS DOUBLE))"
+    requires: []
+    description: "Maximum of numeric column"
+    unit: null
