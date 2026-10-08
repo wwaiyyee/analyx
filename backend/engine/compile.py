@@ -46,17 +46,20 @@ def _compile_filter(flt: Filter) -> Tuple[str, list[Any]]:
 
 
 def _format_time_bound(val: date | datetime | str | None, is_end: bool = False) -> str | None:
-    """Format date/datetime bound for SQL timestamp comparison."""
+    """Format date/datetime bound for ISO-8601 UTC timestamp comparison."""
     if val is None:
         return None
     if isinstance(val, datetime):
-        return val.strftime("%Y-%m-%d %H:%M:%S")
+        return val.strftime("%Y-%m-%dT%H:%M:%SZ")
     if isinstance(val, date):
-        suffix = " 23:59:59" if is_end else " 00:00:00"
+        suffix = "T23:59:59Z" if is_end else "T00:00:00Z"
         return f"{val.isoformat()}{suffix}"
     s = str(val).strip()
-    if len(s) == 10 and is_end:
-        return f"{s} 23:59:59"
+    if len(s) == 10:
+        suffix = "T23:59:59Z" if is_end else "T00:00:00Z"
+        return f"{s}{suffix}"
+    if not s.endswith("Z") and "T" in s:
+        return f"{s}Z"
     return s
 
 
@@ -116,17 +119,8 @@ def compile_spec(
                 continue
 
             # Injected window condition into CASE expressions
-            curr_sql = m_def.sql.replace("WHERE ", f"WHERE {curr_cond} AND ")
-            if "WHEN " in curr_sql:
-                curr_sql = curr_sql.replace("WHEN ", f"WHEN {curr_cond} AND ")
-            else:
-                curr_sql = f"CASE WHEN {curr_cond} THEN ({m_def.sql}) END"
-
-            base_sql = m_def.sql.replace("WHERE ", f"WHERE {base_cond} AND ")
-            if "WHEN " in base_sql:
-                base_sql = base_sql.replace("WHEN ", f"WHEN {base_cond} AND ")
-            else:
-                base_sql = f"CASE WHEN {base_cond} THEN ({m_def.sql}) END"
+            curr_sql = m_def.sql.replace("WHEN ", f"WHEN {curr_cond} AND ")
+            base_sql = m_def.sql.replace("WHEN ", f"WHEN {base_cond} AND ")
 
             select_exprs.append(f"{curr_sql} AS current_{m_ref.name}")
             select_exprs.append(f"{base_sql} AS baseline_{m_ref.name}")
@@ -145,15 +139,22 @@ def compile_spec(
                 params.append(t_end)
 
         select_exprs: list[str] = []
-        # Time series grain
-        if spec.time and spec.time.grain:
+        # Time series grain only if explicit time dimension requested
+        has_time_dim = any(
+            d in spec.dimensions
+            for d in ("date", "time", "block_time", "day", "month", "timestamp")
+        )
+        if spec.time and spec.time.grain and has_time_dim:
             time_col = spec.time.column
             grain = spec.time.grain.lower()
-            select_exprs.append(f"DATE_TRUNC('{grain}', CAST({time_col} AS TIMESTAMP)) AS {time_col}_grain")
+            select_exprs.append(
+                f"DATE_TRUNC('{grain}', CAST({time_col} AS TIMESTAMP)) AS {time_col}_grain"
+            )
 
         # Dimensions
         for dim in spec.dimensions:
-            select_exprs.append(dim)
+            if dim not in select_exprs:
+                select_exprs.append(dim)
 
         # Metrics
         for m_ref in spec.metrics:
@@ -165,7 +166,11 @@ def compile_spec(
     select_sql = ", ".join(select_exprs) if select_exprs else "*"
 
     group_cols: list[str] = []
-    if spec.time and spec.time.grain and not is_pop:
+    has_time_dim = any(
+        d in spec.dimensions
+        for d in ("date", "time", "block_time", "day", "month", "timestamp")
+    )
+    if spec.time and spec.time.grain and has_time_dim and not is_pop:
         group_cols.append(f"{spec.time.column}_grain")
     group_cols.extend(spec.dimensions)
 
