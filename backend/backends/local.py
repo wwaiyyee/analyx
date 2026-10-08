@@ -38,9 +38,9 @@ class LocalBackend(ExecutionBackend):
         try:
             # Register parquet files as temporary views
             for alias, path in table_map.items():
+                escaped_path = path.replace("'", "''")
                 conn.execute(
-                    f"CREATE TEMPORARY VIEW {alias} AS SELECT * FROM read_parquet(?)",
-                    [path],
+                    f"CREATE TEMPORARY VIEW {alias} AS SELECT * FROM read_parquet('{escaped_path}')"
                 )
 
             cursor = conn.execute(sql, params)
