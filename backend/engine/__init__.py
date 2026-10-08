@@ -13,6 +13,11 @@ from backend.engine.models import (
     TimeWindow,
     ValidationCheck,
 )
+from backend.engine.sufficiency_models import (
+    Requirement,
+    RequirementCheck,
+    SufficiencyResult,
+)
 
 __all__ = [
     "AnalysisSpec",
@@ -26,4 +31,7 @@ __all__ = [
     "RowRefs",
     "TimeWindow",
     "ValidationCheck",
+    "Requirement",
+    "RequirementCheck",
+    "SufficiencyResult",
 ]
