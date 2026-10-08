@@ -237,6 +237,8 @@ async def upload_dataset(
     session.refresh(version)
 
     return {
+        "dataset_id": dataset.id,
+        "version_id": version.id,
         "dataset": dataset.model_dump(),
         "version": version.model_dump(),
         "profile": profile,
@@ -246,6 +248,7 @@ async def upload_dataset(
 
 
 @router.post("/onchain")
+@router.post("/sync-onchain")
 def sync_onchain_dataset(
     req: OnchainSyncRequest,
     bg_tasks: BackgroundTasks,
