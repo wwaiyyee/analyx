@@ -64,7 +64,24 @@ async def run_orchestrator(
         yield done_event(session_id=session_id, tool_calls_used=0)
         return
 
-    # 3. Setup conversation context
+    # 3. Setup conversation context with dynamic workspace dataset schemas
+    from backend.db.models import DataDictionaryEntry
+    ds_stmt = select(Dataset).where(Dataset.workspace_id == workspace_id)
+    ws_datasets = db_session.exec(ds_stmt).all()
+    ds_context_lines = []
+    for d in ws_datasets:
+        v_stmt = select(DatasetVersion).where(DatasetVersion.dataset_id == d.id).order_by(DatasetVersion.version_num.desc())
+        v = db_session.exec(v_stmt).first()
+        if v:
+            dict_stmt = select(DataDictionaryEntry).where(DataDictionaryEntry.dataset_id == d.id)
+            entries = db_session.exec(dict_stmt).all()
+            col_desc = ", ".join([f"{e.column_name} ({e.role})" for e in entries[:15]])
+            ds_context_lines.append(f"- Dataset '{d.name}' (id: '{d.id}', version_id: '{v.id}', {v.row_count} rows): Columns: {col_desc}")
+
+    dynamic_system = ANALYST_SYSTEM_PROMPT
+    if ds_context_lines:
+        dynamic_system += "\n\nAvailable Workspace Datasets:\n" + "\n".join(ds_context_lines)
+
     sanitized_query = sanitize_input_prompt(user_query)
     messages: list[dict[str, Any]] = [
         {"role": "user", "content": f"<data>{sanitized_query}</data>"}
@@ -81,7 +98,7 @@ async def run_orchestrator(
         try:
             llm_resp = p.complete(
                 messages=messages,
-                system=ANALYST_SYSTEM_PROMPT,
+                system=dynamic_system,
                 tools=TOOL_DEFINITIONS,
                 max_tokens=2000,
             )
@@ -147,18 +164,40 @@ async def run_orchestrator(
                 )
                 break
 
-    # 5. Fetch all findings in session if none was directly returned
+    # 5. Build findings from evidence if none was directly returned
     if not validated_findings:
-        f_stmt = select(Finding).where(Finding.session_id == session_id)
-        findings_in_db = db_session.exec(f_stmt).all()
-        for f in findings_in_db:
-            validated_findings.append(f.model_dump())
-            ev = db_session.get(Evidence, f.evidence_id)
-            if ev and ev.id not in evidence_map:
-                evidence_map[ev.id] = {
-                    "evidence_id": ev.id,
-                    "metrics": json.loads(ev.metrics_json),
-                }
+        from backend.core.ids import generate_id
+        if evidence_map:
+            for ev_id, ev_data in evidence_map.items():
+                metrics = ev_data.get("metrics", {})
+                for m_name, m_val in metrics.items():
+                    claim_str = f"Calculated {m_name.replace('_', ' ')}: {m_val}."
+                    finding = Finding(
+                        id=generate_id("fd"),
+                        session_id=session_id,
+                        evidence_id=ev_id,
+                        claim=claim_str,
+                        claim_type="metric",
+                        status="supported",
+                    )
+                    db_session.add(finding)
+                    db_session.commit()
+                    db_session.refresh(finding)
+                    f_dict = finding.model_dump()
+                    validated_findings.append(f_dict)
+                    yield finding_event(f_dict)
+
+        if not validated_findings:
+            f_stmt = select(Finding).where(Finding.session_id == session_id)
+            findings_in_db = db_session.exec(f_stmt).all()
+            for f in findings_in_db:
+                validated_findings.append(f.model_dump())
+                ev = db_session.get(Evidence, f.evidence_id)
+                if ev and ev.id not in evidence_map:
+                    evidence_map[ev.id] = {
+                        "evidence_id": ev.id,
+                        "metrics": json.loads(ev.metrics_json),
+                    }
 
     # 6. Compose Answer
     yield status_event("Composing grounded answer...")
