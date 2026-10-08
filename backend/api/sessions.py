@@ -98,24 +98,23 @@ def get_session_detail(
     }
 
 
+from backend.agent.orchestrator import run_orchestrator
+
+
 async def _stream_chat_response(
     session_id: str,
     user_text: str,
+    workspace_id: str,
     session_db: Session,
 ) -> AsyncGenerator[str, None]:
-    """Generate Server-Sent Events (SSE) for agent processing steps."""
-    # Emit status event
-    yield f"data: {json.dumps({'type': 'status', 'data': {'text': 'Analyzing question and checking evidence requirements...'}})}\n\n"
-
-    # Emit plan event
-    yield f"data: {json.dumps({'type': 'plan', 'data': {'steps': ['Identify metrics', 'Validate sufficiency', 'Execute deterministic analysis']}})}\n\n"
-
-    # Delta text
-    delta_text = f"Received analysis request: '{user_text}'. Initiating analysis run."
-    yield f"data: {json.dumps({'type': 'answer_delta', 'data': {'delta': delta_text}})}\n\n"
-
-    # Emit done
-    yield f"data: {json.dumps({'type': 'done', 'data': {'session_id': session_id}})}\n\n"
+    """Generate Server-Sent Events (SSE) for agent processing steps via orchestrator."""
+    async for event in run_orchestrator(
+        session_id=session_id,
+        user_query=user_text,
+        workspace_id=workspace_id,
+        db_session=session_db,
+    ):
+        yield event.to_sse()
 
 
 @router.post("/{session_id}/messages")
@@ -152,7 +151,7 @@ async def post_message(
     session.commit()
 
     return StreamingResponse(
-        _stream_chat_response(session_id, req.text, session),
+        _stream_chat_response(session_id, req.text, workspace.id, session),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
