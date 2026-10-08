@@ -3,10 +3,7 @@
  * Handles real-time streaming of agent status, plans, findings, charts, and answer deltas.
  */
 
-import { getStoredToken } from "./api";
-
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+import { API_BASE_URL, getStoredToken } from "./api";
 
 export type AgentEventType =
   | "status"
