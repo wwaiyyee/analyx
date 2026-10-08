@@ -22,8 +22,11 @@ def execute_analysis(
     assumption_ids: list[str] | None = None,
 ) -> Tuple[Evidence, QueryResult]:
     """Execute complete analysis pipeline: validate spec -> compile SQL -> run backend -> construct evidence."""
+    from backend.config import settings
+    from backend.backends.tee import TeeBackend
+    exec_backend = backend or (TeeBackend() if settings.feature_tee else LocalBackend())
+
     reg = registry or default_registry
-    exec_backend = backend or LocalBackend()
 
     # 1. Validate spec against schema and metric packs
     validate_spec(spec, available_columns=available_columns, registry=reg)
