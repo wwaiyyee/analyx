@@ -1,0 +1,39 @@
+[
+  {
+    "id": "eval_01_last_month_outflow",
+    "name": "Total Outflow in Last Complete Month",
+    "query": "What was total outflow last complete month?",
+    "expected_metric": "outflow_usd",
+    "expected_value": 1200000.0,
+    "time_window": "2024-11-01 to 2024-11-30",
+    "tolerance": 0.01
+  },
+  {
+    "id": "eval_02_top_counterparty",
+    "name": "Top Counterparty by Outflow in Last Complete Month",
+    "query": "Who was our largest counterparty by spend last month?",
+    "expected_metric": "outflow_usd",
+    "expected_dimension": "destination",
+    "expected_top_value": "Vendor_Alpha_SecOps",
+    "expected_amount": 500000.0,
+    "tolerance": 0.01
+  },
+  {
+    "id": "eval_03_mom_outflow_growth",
+    "name": "Month-over-Month Outflow Growth",
+    "query": "How did outflow change month-over-month?",
+    "prior_period_value": 1000000.0,
+    "current_period_value": 1200000.0,
+    "expected_pct_change": 20.0,
+    "tolerance": 0.01
+  },
+  {
+    "id": "eval_04_net_flow_solvency",
+    "name": "Net Flow Solvency Calculation",
+    "query": "What was our net cash flow in November?",
+    "expected_inflow": 2500000.0,
+    "expected_outflow": 1200000.0,
+    "expected_net_flow": 1300000.0,
+    "tolerance": 0.01
+  }
+]
