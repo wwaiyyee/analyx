@@ -97,3 +97,22 @@ class MetricPackRegistry:
 
 
 default_registry = MetricPackRegistry()
+
+
+def load_metric_pack(name: str = "treasury_v1") -> MetricPack:
+    """Load and register a metric pack by name from metric_packs directory."""
+    pack = default_registry.get_pack(name)
+    if pack:
+        return pack
+
+    paths = [
+        Path("metric_packs") / f"{name}.yaml",
+        Path.cwd() / "metric_packs" / f"{name}.yaml",
+        Path(__file__).parent.parent.parent / "metric_packs" / f"{name}.yaml",
+    ]
+    for p in paths:
+        if p.exists():
+            return default_registry.load_from_yaml(p)
+
+    raise FileNotFoundError(f"Metric pack '{name}.yaml' not found in metric_packs directory")
+
