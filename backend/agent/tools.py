@@ -247,17 +247,63 @@ class ToolExecutor:
         return result.model_dump()
 
     def _tool_run_analysis(self, args: dict[str, Any]) -> dict[str, Any]:
-        spec_dict = args.get("spec", {})
+        spec_dict = dict(args.get("spec", {}))
+
+        # Normalize LLM format variations
+        if "dataset_versions" in spec_dict and not spec_dict.get("dataset_version_ids"):
+            spec_dict["dataset_version_ids"] = [
+                x["id"] if isinstance(x, dict) else str(x) for x in spec_dict["dataset_versions"]
+            ]
+        if "metrics" in spec_dict:
+            norm_m = []
+            for m in spec_dict["metrics"]:
+                if isinstance(m, str):
+                    norm_m.append({"name": m})
+                elif isinstance(m, dict):
+                    m_name = m.get("name") or m.get("metric_name") or m.get("metric") or "outflow_usd"
+                    norm_m.append({"name": m_name, "params": m.get("params", {})})
+            spec_dict["metrics"] = norm_m
+        if "filters" in spec_dict:
+            for f in spec_dict["filters"]:
+                if isinstance(f, dict):
+                    if "operator" in f and "op" not in f:
+                        f["op"] = f.pop("operator")
+                    if f.get("value") == "outflow":
+                        f["value"] = "out"
+                    elif f.get("value") == "inflow":
+                        f["value"] = "in"
+        if "time" in spec_dict and isinstance(spec_dict["time"], dict):
+            t_obj = spec_dict["time"]
+            if "column" not in t_obj:
+                t_obj["column"] = "block_time"
+            for k in ["start", "end"]:
+                if k in t_obj and isinstance(t_obj[k], str) and "T" in t_obj[k]:
+                    t_obj[k] = t_obj[k].split("T")[0]
+
         spec = AnalysisSpec.model_validate(spec_dict)
 
-        # Look up dataset versions
+        # Look up dataset versions or auto-resolve
         v_ids = spec.dataset_version_ids
         if not v_ids:
-            return {"error": "No dataset_version_ids specified"}
+            # Auto-resolve latest version in workspace
+            stmt = select(DatasetVersion).join(Dataset).where(Dataset.workspace_id == self.workspace_id).order_by(DatasetVersion.version_num.desc())
+            latest_v = self.db.exec(stmt).first()
+            if latest_v:
+                v_ids = [latest_v.id]
+                spec.dataset_version_ids = v_ids
+            else:
+                return {"error": "No datasets available in workspace"}
 
-        v = self.db.get(DatasetVersion, v_ids[0])
+        target_id = v_ids[0]
+        v = self.db.get(DatasetVersion, target_id)
+        if not v and target_id.startswith("ds_"):
+            stmt = select(DatasetVersion).where(DatasetVersion.dataset_id == target_id).order_by(DatasetVersion.version_num.desc())
+            v = self.db.exec(stmt).first()
+            if v:
+                spec.dataset_version_ids = [v.id]
+
         if not v:
-            return {"error": f"Dataset version {v_ids[0]} not found"}
+            return {"error": f"Dataset version {target_id} not found"}
 
         table_map = {"t": v.parquet_path}
         dataset_hashes = {v.id: v.content_hash}
@@ -265,7 +311,12 @@ class ToolExecutor:
         import pandas as pd
         df = pd.read_parquet(v.parquet_path)
 
-        load_metric_pack("treasury_v1")
+        for pack in ["treasury_v1", "generic_v1"]:
+            try:
+                load_metric_pack(pack)
+            except Exception:
+                pass
+
         evidence, q_res = execute_analysis(
             spec=spec,
             session_id=self.session_id,
