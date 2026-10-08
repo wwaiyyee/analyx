@@ -32,17 +32,7 @@ def _infer_column_type(values: list[Any]) -> str:
     if all(s.lower() in BOOLEAN_TRUE_VALUES | BOOLEAN_FALSE_VALUES for s in non_empty):
         return "bool"
 
-    # 2. Check date
-    date_matches = 0
-    for s in non_empty[:50]:
-        if any(c in s for c in "-/.") and any(d in s for d in "0123456789"):
-            # Simple heuristic before full parse
-            if len(s) >= 8 and sum(c.isdigit() for c in s) >= 4:
-                date_matches += 1
-    if len(non_empty) > 0 and date_matches / min(50, len(non_empty)) >= 0.70:
-        return "date"
-
-    # 3. Check number
+    # 2. Check number (with currency/percent strip)
     num_matches = 0
     for s in non_empty[:50]:
         cleaned = (
@@ -54,16 +44,39 @@ def _infer_column_type(values: list[Any]) -> str:
             .replace(" ", "")
             .strip()
         )
-        if cleaned.replace(".", "", 1).replace("-", "", 1).isdigit():
+        if cleaned and cleaned.replace(".", "", 1).replace("-", "", 1).isdigit():
             num_matches += 1
     if len(non_empty) > 0 and num_matches / min(50, len(non_empty)) >= 0.70:
-        if all(
-            s.replace(",", "").replace(" ", "").lstrip("-").isdigit()
-            for s in non_empty
-            if s.isdigit()
-        ):
-            return "int"
-        return "decimal"
+        has_fractional = False
+        for s in non_empty:
+            cleaned = (
+                s.replace("$", "")
+                .replace("€", "")
+                .replace("£", "")
+                .replace("%", "")
+                .replace(" ", "")
+                .strip()
+            )
+            if "." in cleaned:
+                parts = cleaned.split(".")
+                if len(parts) == 2 and parts[1].isdigit():
+                    has_fractional = True
+                    break
+            elif "," in cleaned:
+                parts = cleaned.split(",")
+                if len(parts) == 2 and len(parts[1]) != 3 and parts[1].isdigit():
+                    has_fractional = True
+                    break
+        return "decimal" if has_fractional else "int"
+
+    # 3. Check date
+    date_matches = 0
+    for s in non_empty[:50]:
+        if any(c in s for c in "-/") and any(d in s for d in "0123456789"):
+            if len(s) >= 8 and (s.count("-") == 2 or s.count("/") == 2):
+                date_matches += 1
+    if len(non_empty) > 0 and date_matches / min(50, len(non_empty)) >= 0.70:
+        return "date"
 
     return "string"
 
