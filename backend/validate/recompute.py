@@ -33,11 +33,11 @@ def recompute_spec(
 
     exec_backend = backend or LocalBackend()
     metric_pack = load_metric_pack(metric_pack_name)
-    compiled = compile_spec(spec, metric_pack)
+    sql, params = compile_spec(spec, metric_pack)
 
     query_res = exec_backend.execute_query(
-        sql=compiled.sql,
-        params=compiled.params,
+        sql=sql,
+        params=params,
         table_map=table_map,
     )
 
