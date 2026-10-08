@@ -97,13 +97,18 @@ def prepare_attestation(
     unique_datasets = {d.version_hash: d for d in dataset_refs}.values()
 
     now_iso = datetime.now(timezone.utc).isoformat()
+    enclave_quote = None
+    if settings.feature_tee:
+        from backend.backends.tee import TeeBackend
+        enclave_quote = TeeBackend().generate_enclave_quote(report.sha256)
+
     bundle = AttestationBundle(
         version=1,
         report=ReportRef(id=report.id, sha256=report.sha256, format="md"),
         datasets=list(unique_datasets),
         evidence=evidence_refs,
         engine=EngineRef(name="analyx-engine", version="0.1.0", git_commit="HEAD"),
-        enclave=None,
+        enclave=enclave_quote,
         signer=req.signer,
         created_at=now_iso,
     )
