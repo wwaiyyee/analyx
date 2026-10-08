@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useWallet } from "@/lib/wallet/provider";
 import { api } from "@/lib/api";
-import { Loader2, Sparkles, Database } from "lucide-react";
+import { Loader2, Database } from "lucide-react";
 
-export default function WorkspaceEntryPage() {
+function WorkspaceEntryContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isDemo = searchParams.get("demo") === "true";
@@ -25,16 +25,14 @@ export default function WorkspaceEntryPage() {
         }
 
         setStatus("Setting up analysis workspace...");
-        // Check existing datasets
         let datasetIds: string[] = [];
         try {
           const datasets = await api.datasets.list();
           datasetIds = datasets.map((d) => d.id);
         } catch {
-          // In case fresh session needed
+          // Fallback if fresh
         }
 
-        // Create new session
         const session = await api.sessions.create(
           isDemo ? "Solana Treasury Analysis (Demo)" : "New Analysis Session",
           datasetIds
@@ -45,7 +43,6 @@ export default function WorkspaceEntryPage() {
         }
       } catch (err: unknown) {
         console.error("Failed to initialize workspace session:", err);
-        // Fallback default redirect
         if (mounted) {
           router.replace(`/workspace/ses_default_session`);
         }
@@ -73,5 +70,19 @@ export default function WorkspaceEntryPage() {
         <span>{status}</span>
       </p>
     </div>
+  );
+}
+
+export default function WorkspaceEntryPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center bg-[#090a0f]">
+          <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
+        </div>
+      }
+    >
+      <WorkspaceEntryContent />
+    </Suspense>
   );
 }
