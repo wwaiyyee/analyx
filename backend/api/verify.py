@@ -109,6 +109,25 @@ def verify_public_attestation(req: VerifyRequest) -> VerifyResponse:
         )
         return VerifyResponse(status="INVALID_BUNDLE", checks=checks, on_chain=None)
 
+    # Check TEE Confidential Enclave Attestation
+    if bundle_obj.enclave:
+        try:
+            from backend.backends.tee import TeeBackend
+            tee = TeeBackend()
+            is_valid_enclave = tee.verify_enclave_quote(bundle_obj.enclave, bundle_obj.report.sha256)
+            meas = bundle_obj.enclave.get("measurement", "")[:12]
+            checks.append(
+                VerificationCheck(
+                    name="enclave_attestation",
+                    passed=is_valid_enclave,
+                    detail=f"Confidential TEE measurement verified (PCR0: {meas}...)",
+                )
+            )
+        except Exception as exc:
+            checks.append(
+                VerificationCheck(name="enclave_attestation", passed=False, detail=f"Enclave verification failed: {exc}")
+            )
+
     expected_memo = f"analyx:v1:{calculated_root}"
 
     # 4. Check on-chain anchoring
