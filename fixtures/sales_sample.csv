@@ -1,0 +1,16 @@
+Report: Global Sales & Invoicing Pipeline Q3 2026,,,,,,,,
+Generated on 2026-09-01 by Finance Dept,,,,,,,,
+Invoice_ID,Date,Region,Customer,Units,Unit_Price,Total_Revenue,Tax_Rate,Is_VIP
+INV-1001,01/07/2026,Europe,Acme Berlin,"15","1.250,50","18.757,50",19%,true
+INV-1002,05/07/2026,Europe,Nordic Retail,"8","840,00","6.720,00",25%,false
+INV-1003,12/07/2026,US,Global Logistics,"25","$2,100.00","$52,500.00",8%,true
+INV-1004,15.07.2026,Europe,Bavaria Auto,"4","5.400,00","21.600,00",19%,true
+INV-1005,22/07/2026,Europe,Zurich Trading,"-2","1.500,00","(3.000,00)",7.7%,false
+INV-1006,28/07/2026,Europe,Iberian Express,"12","450,25","5.403,00",21%,false
+INV-1007,03/08/2026,US,Midwest Supplies,"30","$950.50","$28,515.00",6.5%,false
+INV-1008,10/08/2026,Europe,Parisian Luxury,"6","4.200,00","25.200,00",20%,true
+INV-1009,18/08/2026,Europe,Vienna Biotech,"10","1.850,00","18.500,00",20%,true
+INV-1010,25/08/2026,Europe,Benelux Logistics,"14","980,00","13.720,00",21%,false
+INV-1011,29/08/2026,US,Pacific Tech,"5","$7,500.00","$37,500.00",9%,true
+Subtotal Europe,,,,,"14.440,25","108.180,50",,
+Grand Total,,,,,,,"226.715,50",,
