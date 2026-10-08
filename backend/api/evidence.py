@@ -9,7 +9,7 @@ from sqlmodel import Session, select
 
 from backend.api.auth import get_current_workspace
 from backend.backends.local import LocalBackend
-from backend.core.hashing import sha256_canonical
+from backend.core.hashing import hash_obj
 from backend.db.models import AnalysisSession, DatasetVersion, Evidence, Workspace
 from backend.db.session import get_session
 from backend.engine.compile import compile_spec
@@ -91,26 +91,26 @@ def get_evidence_rows(
     backend = LocalBackend()
     table_map = {"main": version.parquet_path}
 
-    # Query source rows matching filter/time window
     metric_pack = load_metric_pack("treasury_v1")
     compiled = compile_spec(spec, metric_pack)
 
     paged_sql = f"{compiled.sql} LIMIT {limit} OFFSET {offset}"
     try:
-        paged_df = backend.execute(paged_sql, compiled.params, table_map)
+        query_res = backend.execute_query(paged_sql, compiled.params, table_map)
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={"error": {"code": "EXECUTION_ERROR", "message": str(exc)}},
         ) from exc
 
-    rows = paged_df.to_dict(orient="records")
-
-    # Annotate Solana explorer links if tx_signature is present
-    for row in rows:
-        if "tx_signature" in row and row["tx_signature"]:
-            sig = str(row["tx_signature"])
-            row["explorer_url"] = f"https://explorer.solana.com/tx/{sig}?cluster=devnet"
+    rows: list[dict[str, Any]] = []
+    cols = query_res.columns
+    for r in query_res.rows:
+        row_dict = {col: val for col, val in zip(cols, r)}
+        if "tx_signature" in row_dict and row_dict["tx_signature"]:
+            sig = str(row_dict["tx_signature"])
+            row_dict["explorer_url"] = f"https://explorer.solana.com/tx/{sig}?cluster=devnet"
+        rows.append(row_dict)
 
     return {
         "evidence_id": evidence_id,
@@ -159,17 +159,14 @@ def prove_evidence(
     table_map = {"main": version.parquet_path}
 
     try:
-        re_df = backend.execute(sql, params, table_map)
+        query_res = backend.execute_query(sql, params, table_map)
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={"error": {"code": "REPRODUCTION_FAILED", "message": str(exc)}},
         ) from exc
 
-    # Compute result hash
-    records = re_df.to_dict(orient="records")
-    computed_result_hash = sha256_canonical(records)
-
+    computed_result_hash = hash_obj(query_res.to_dict())
     matches = (computed_result_hash == ev.result_hash)
 
     return {
