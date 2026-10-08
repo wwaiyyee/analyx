@@ -1,6 +1,6 @@
 """Planted-truth treasury dataset generator for evaluation suites per §13."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 import random
 from typing import Any, Tuple
 import pandas as pd
@@ -26,136 +26,109 @@ def generate_planted_treasury(
     random.seed(seed)
 
     rows = []
-    nov_start = datetime(2024, 11, 1, 0, 0, 0, tzinfo=timezone.utc)
-    nov_end = datetime(2024, 11, 30, 23, 59, 59, tzinfo=timezone.utc)
-
-    oct_start = datetime(2024, 10, 1, 0, 0, 0, tzinfo=timezone.utc)
-    oct_end = datetime(2024, 10, 31, 23, 59, 59, tzinfo=timezone.utc)
 
     # 1. Plant October baseline: Outflow = 1,000,000, Inflow = 1,800,000
     rows.append({
         "tx_signature": "oct_inflow_tx_001",
-        "block_time": datetime(2024, 10, 5, 12, 0, tzinfo=timezone.utc).isoformat(),
-        "source": "Staking_Pool_Rewards",
-        "destination": "Treasury_Vault",
+        "block_time": "2024-10-05T12:00:00Z",
+        "counterparty": "Staking_Pool_Rewards",
         "amount_usd": 1800000.0,
-        "token": "USDC",
-        "direction": "inflow",
-        "category": "yield",
-        "status": "success",
+        "token_symbol": "USDC",
+        "direction": "in",
+        "tx_status": "success",
     })
     rows.append({
         "tx_signature": "oct_outflow_tx_001",
-        "block_time": datetime(2024, 10, 10, 14, 0, tzinfo=timezone.utc).isoformat(),
-        "source": "Treasury_Vault",
-        "destination": "General_Payroll",
+        "block_time": "2024-10-10T14:00:00Z",
+        "counterparty": "General_Payroll",
         "amount_usd": 1000000.0,
-        "token": "USDC",
-        "direction": "outflow",
-        "category": "operations",
-        "status": "success",
+        "token_symbol": "USDC",
+        "direction": "out",
+        "tx_status": "success",
     })
 
     # 2. Plant November exact ground truth:
     # Nov Inflow: exactly 2,500,000.00
     rows.append({
         "tx_signature": "nov_inflow_seed_01",
-        "block_time": datetime(2024, 11, 2, 10, 0, tzinfo=timezone.utc).isoformat(),
-        "source": "Grant_Foundation",
-        "destination": "Treasury_Vault",
+        "block_time": "2024-11-02T10:00:00Z",
+        "counterparty": "Grant_Foundation",
         "amount_usd": 1500000.0,
-        "token": "USDC",
-        "direction": "inflow",
-        "category": "grant",
-        "status": "success",
+        "token_symbol": "USDC",
+        "direction": "in",
+        "tx_status": "success",
     })
     rows.append({
         "tx_signature": "nov_inflow_seed_02",
-        "block_time": datetime(2024, 11, 20, 11, 30, tzinfo=timezone.utc).isoformat(),
-        "source": "Ecosystem_Rewards",
-        "destination": "Treasury_Vault",
+        "block_time": "2024-11-20T11:30:00Z",
+        "counterparty": "Ecosystem_Rewards",
         "amount_usd": 1000000.0,
-        "token": "USDC",
-        "direction": "inflow",
-        "category": "yield",
-        "status": "success",
+        "token_symbol": "USDC",
+        "direction": "in",
+        "tx_status": "success",
     })
 
     # Nov Outflows: exactly 1,200,000.00
     # Top counterparty: Vendor_Alpha_SecOps (500,000.00)
     rows.append({
         "tx_signature": "nov_outflow_top_vendor",
-        "block_time": datetime(2024, 11, 14, 16, 45, tzinfo=timezone.utc).isoformat(),
-        "source": "Treasury_Vault",
-        "destination": "Vendor_Alpha_SecOps",
+        "block_time": "2024-11-14T16:45:00Z",
+        "counterparty": "Vendor_Alpha_SecOps",
         "amount_usd": 500000.0,
-        "token": "USDC",
-        "direction": "outflow",
-        "category": "security_audit",
-        "status": "success",
+        "token_symbol": "USDC",
+        "direction": "out",
+        "tx_status": "success",
     })
 
     # Secondary counterparties totaling 700,000.00
     rows.append({
         "tx_signature": "nov_outflow_payroll",
-        "block_time": datetime(2024, 11, 15, 12, 0, tzinfo=timezone.utc).isoformat(),
-        "source": "Treasury_Vault",
-        "destination": "Core_Contributors",
+        "block_time": "2024-11-15T12:00:00Z",
+        "counterparty": "Core_Contributors",
         "amount_usd": 400000.0,
-        "token": "USDC",
-        "direction": "outflow",
-        "category": "payroll",
-        "status": "success",
+        "token_symbol": "USDC",
+        "direction": "out",
+        "tx_status": "success",
     })
     rows.append({
         "tx_signature": "nov_outflow_infra",
-        "block_time": datetime(2024, 11, 18, 9, 15, tzinfo=timezone.utc).isoformat(),
-        "source": "Treasury_Vault",
-        "destination": "RPC_Infra_Cluster",
+        "block_time": "2024-11-18T09:15:00Z",
+        "counterparty": "RPC_Infra_Cluster",
         "amount_usd": 200000.0,
-        "token": "USDC",
-        "direction": "outflow",
-        "category": "infrastructure",
-        "status": "success",
+        "token_symbol": "USDC",
+        "direction": "out",
+        "tx_status": "success",
     })
     rows.append({
         "tx_signature": "nov_outflow_marketing",
-        "block_time": datetime(2024, 11, 25, 15, 0, tzinfo=timezone.utc).isoformat(),
-        "source": "Treasury_Vault",
-        "destination": "Global_Hackathon_Prize",
+        "block_time": "2024-11-25T15:00:00Z",
+        "counterparty": "Global_Hackathon_Prize",
         "amount_usd": 100000.0,
-        "token": "USDC",
-        "direction": "outflow",
-        "category": "marketing",
-        "status": "success",
+        "token_symbol": "USDC",
+        "direction": "out",
+        "tx_status": "success",
     })
 
     # 3. Add background transactions (earlier months & partial current month)
-    earlier_start = datetime(2024, 6, 1, tzinfo=timezone.utc)
     for i in range(num_rows - len(rows)):
-        # Random date in June-September or December (partial month)
         is_dec = random.random() < 0.2
         if is_dec:
-            # December partial month (1st to 14th)
             day = random.randint(1, 14)
-            dt = datetime(2024, 12, day, random.randint(0, 23), random.randint(0, 59), tzinfo=timezone.utc)
+            dt_str = f"2024-12-{day:02d}T{random.randint(0, 23):02d}:{random.randint(0, 59):02d}:00Z"
         else:
-            # Summer months
             month = random.randint(6, 9)
             day = random.randint(1, 28)
-            dt = datetime(2024, month, day, random.randint(0, 23), random.randint(0, 59), tzinfo=timezone.utc)
+            dt_str = f"2024-{month:02d}-{day:02d}T{random.randint(0, 23):02d}:{random.randint(0, 59):02d}:00Z"
 
-        direction = "inflow" if random.random() < 0.4 else "outflow"
+        direction = "in" if random.random() < 0.4 else "out"
         rows.append({
             "tx_signature": f"tx_bg_{i:04d}",
-            "block_time": dt.isoformat(),
-            "source": f"Account_{random.randint(1, 50)}",
-            "destination": f"Account_{random.randint(1, 50)}",
+            "block_time": dt_str,
+            "counterparty": f"Account_{random.randint(1, 50)}",
             "amount_usd": round(random.uniform(500.0, 50000.0), 2),
-            "token": "USDC" if random.random() < 0.8 else "SOL",
+            "token_symbol": "USDC" if random.random() < 0.8 else "SOL",
             "direction": direction,
-            "category": "operations",
-            "status": "success",
+            "tx_status": "success",
         })
 
     df = pd.DataFrame(rows)
