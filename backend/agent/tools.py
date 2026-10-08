@@ -274,16 +274,32 @@ class ToolExecutor:
             available_columns=list(df.columns),
         )
 
-        self.db.add(evidence)
+        db_ev = Evidence(
+            id=evidence.id,
+            session_id=self.session_id,
+            sha256=evidence.evidence_hash,
+            spec_json=json.dumps(evidence.spec.model_dump(mode="json")),
+            result_hash=evidence.result_hash,
+            metrics_json=json.dumps(evidence.metrics),
+            row_refs_json=json.dumps(evidence.row_refs.model_dump(mode="json")),
+            explorer_urls_json="[]",
+            reproduction_json=json.dumps({
+                "query": evidence.query_sql,
+                "params": evidence.query_params,
+                "dataset_hashes": evidence.dataset_hashes,
+            }),
+            created_at=evidence.created_at,
+        )
+        self.db.add(db_ev)
         self.db.commit()
-        self.db.refresh(evidence)
+        self.db.refresh(db_ev)
 
         # Return ONLY metrics and evidence ID - NEVER raw rows
         return {
-            "evidence_id": evidence.id,
-            "result_hash": evidence.result_hash,
-            "metrics": json.loads(evidence.metrics_json),
-            "reproduction": json.loads(evidence.reproduction_json),
+            "evidence_id": db_ev.id,
+            "result_hash": db_ev.result_hash,
+            "metrics": json.loads(db_ev.metrics_json),
+            "reproduction": json.loads(db_ev.reproduction_json),
         }
 
     def _tool_propose_finding(self, args: dict[str, Any]) -> dict[str, Any]:
