@@ -3,8 +3,16 @@
  * Typed client for interacting with the Analyx FastAPI backend.
  */
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+function resolveApiBase(): string {
+  const envUrl =
+    process.env.NEXT_PUBLIC_API_URL ||
+    process.env.NEXT_PUBLIC_API_BASE;
+  if (!envUrl) return "http://localhost:8000/api";
+  const trimmed = envUrl.replace(/\/+$/, "");
+  return trimmed.endsWith("/api") ? trimmed : `${trimmed}/api`;
+}
+
+export const API_BASE_URL = resolveApiBase();
 
 const TOKEN_STORAGE_KEY = "analyx_auth_token";
 const WORKSPACE_STORAGE_KEY = "analyx_workspace_id";
@@ -294,6 +302,16 @@ export const api = {
       const res = await apiRequest<VerifyAuthResponse>("/auth/verify", {
         method: "POST",
         body: JSON.stringify({ wallet, signature, message }),
+      });
+      if (res.token) {
+        setStoredToken(res.token, res.workspace_id);
+      }
+      return res;
+    },
+
+    demo: async (): Promise<VerifyAuthResponse> => {
+      const res = await apiRequest<VerifyAuthResponse>("/auth/demo", {
+        method: "POST",
       });
       if (res.token) {
         setStoredToken(res.token, res.workspace_id);
