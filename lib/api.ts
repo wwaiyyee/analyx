@@ -334,11 +334,13 @@ export const api = {
       file: File,
       name?: string
     ): Promise<{
-      job_id: string;
-      dataset_id: string;
-      version_id: string;
-      row_count: number;
-      status: string;
+      job_id?: string;
+      dataset_id?: string;
+      version_id?: string;
+      dataset?: DatasetItem;
+      version?: Record<string, unknown>;
+      row_count?: number;
+      status?: string;
     }> => {
       const formData = new FormData();
       formData.append("file", file);
