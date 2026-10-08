@@ -53,57 +53,67 @@ export function WhyDrawer({
   const [copiedQuery, setCopiedQuery] = useState(false);
 
   useEffect(() => {
-    if (!isOpen || !finding) {
-      setEvidence(null);
-      setSlice(null);
-      setProveResult(null);
+    let active = true;
+
+    if (!isOpen || !finding?.evidence_id) {
       return;
     }
 
-    setActiveTab("summary");
-    setProveResult(null);
-
-    if (finding.evidence_id) {
-      setLoadingEvidence(true);
-      api.evidence
-        .get(finding.evidence_id)
-        .then((ev) => {
+    setLoadingEvidence(true);
+    api.evidence
+      .get(finding.evidence_id)
+      .then((ev) => {
+        if (active) {
           setEvidence(ev);
           setLoadingEvidence(false);
-        })
-        .catch((err) => {
-          console.error("Failed to load evidence:", err);
-          setLoadingEvidence(false);
-        });
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load evidence:", err);
+        if (active) setLoadingEvidence(false);
+      });
 
-      // Load session assumptions
-      if (finding.session_id) {
-        api.sessions
-          .get(finding.session_id)
-          .then((detail) => {
-            setAssumptions(detail.assumptions || []);
-          })
-          .catch(() => {});
-      }
+    // Load session assumptions
+    if (finding.session_id) {
+      api.sessions
+        .get(finding.session_id)
+        .then((detail) => {
+          if (active) setAssumptions(detail.assumptions || []);
+        })
+        .catch(() => {});
     }
+
+    return () => {
+      active = false;
+      setEvidence(null);
+      setSlice(null);
+      setProveResult(null);
+    };
   }, [isOpen, finding]);
 
   // Load slice when rows tab is activated
   useEffect(() => {
-    if (activeTab === "rows" && finding?.evidence_id && !slice && !loadingSlice) {
+    let active = true;
+    if (activeTab === "rows" && finding?.evidence_id && !slice) {
       setLoadingSlice(true);
       api.evidence
         .getSlice(finding.evidence_id, 200)
         .then((s) => {
-          setSlice(s);
-          setLoadingSlice(false);
+          if (active) {
+            setSlice(s);
+            setLoadingSlice(false);
+          }
         })
         .catch((err) => {
           console.error("Failed to load slice:", err);
-          setLoadingSlice(false);
+          if (active) setLoadingSlice(false);
         });
     }
-  }, [activeTab, finding, slice, loadingSlice]);
+
+    return () => {
+      active = false;
+    };
+  }, [activeTab, finding?.evidence_id, slice]);
 
   const handleProveIt = async () => {
     if (!finding?.evidence_id) return;
