@@ -38,8 +38,8 @@ def build_attestation_bundle(
     seen_ev = set()
     for e in evidence:
         e_obj = e if isinstance(e, EvidenceRef) else EvidenceRef.model_validate(e)
-        if e_obj.id not in seen_ev:
-            seen_ev.add(e_obj.id)
+        if e_obj.sha256 not in seen_ev:
+            seen_ev.add(e_obj.sha256)
             parsed_evidence.append(e_obj)
 
     ts_iso = created_at or datetime.now(timezone.utc).isoformat()
