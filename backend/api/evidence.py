@@ -89,10 +89,10 @@ def get_evidence_rows(
 
     # Read slice with DuckDB backend
     backend = LocalBackend()
-    table_map = {"main": version.parquet_path}
+    table_map = {"t": version.parquet_path}
 
-    metric_pack = load_metric_pack("treasury_v1")
-    sql, params = compile_spec(spec, metric_pack)
+    load_metric_pack("treasury_v1")
+    sql, params = compile_spec(spec, table_name="t")
 
     paged_sql = f"{sql} LIMIT {limit} OFFSET {offset}"
     try:
@@ -156,7 +156,7 @@ def prove_evidence(
         )
 
     backend = LocalBackend()
-    table_map = {"main": version.parquet_path}
+    table_map = {"t": version.parquet_path}
 
     try:
         query_res = backend.execute_query(sql, params, table_map)
