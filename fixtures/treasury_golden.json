@@ -1,0 +1,345 @@
+[
+  {
+    "id": "outflow_last_complete_month",
+    "question": "What was our outflow last month?",
+    "spec": {
+      "dataset_version_ids": ["dv_treasury_sample"],
+      "metrics": [{"name": "outflow_usd", "params": {}}],
+      "dimensions": [],
+      "filters": [
+        {"column": "tx_status", "op": "=", "value": "success"}
+      ],
+      "time": {
+        "column": "block_time",
+        "start": "2026-08-01",
+        "end": "2026-08-31",
+        "grain": "month"
+      },
+      "comparison": {"kind": "none"}
+    },
+    "expected_metrics": {
+      "outflow_usd": "4493687.99"
+    },
+    "expected_window": {
+      "start": "2026-08-01",
+      "end": "2026-08-31"
+    },
+    "notes": "August 2026 is last complete month; partial September excluded; failed txs excluded"
+  },
+  {
+    "id": "inflow_last_complete_month",
+    "question": "What was our inflow last month?",
+    "spec": {
+      "dataset_version_ids": ["dv_treasury_sample"],
+      "metrics": [{"name": "inflow_usd", "params": {}}],
+      "dimensions": [],
+      "filters": [
+        {"column": "tx_status", "op": "=", "value": "success"}
+      ],
+      "time": {
+        "column": "block_time",
+        "start": "2026-08-01",
+        "end": "2026-08-31",
+        "grain": "month"
+      },
+      "comparison": {"kind": "none"}
+    },
+    "expected_metrics": {
+      "inflow_usd": "497098.05"
+    },
+    "expected_window": {
+      "start": "2026-08-01",
+      "end": "2026-08-31"
+    },
+    "notes": "August 2026 inflow in USD"
+  },
+  {
+    "id": "net_flow_last_complete_month",
+    "question": "What was our net flow last month?",
+    "spec": {
+      "dataset_version_ids": ["dv_treasury_sample"],
+      "metrics": [{"name": "net_flow_usd", "params": {}}],
+      "dimensions": [],
+      "filters": [
+        {"column": "tx_status", "op": "=", "value": "success"}
+      ],
+      "time": {
+        "column": "block_time",
+        "start": "2026-08-01",
+        "end": "2026-08-31",
+        "grain": "month"
+      },
+      "comparison": {"kind": "none"}
+    },
+    "expected_metrics": {
+      "net_flow_usd": "-3996589.94"
+    },
+    "expected_window": {
+      "start": "2026-08-01",
+      "end": "2026-08-31"
+    },
+    "notes": "Inflow ($497,098.05) minus outflow ($4,493,687.99)"
+  },
+  {
+    "id": "tx_count",
+    "question": "How many successful transactions occurred last month?",
+    "spec": {
+      "dataset_version_ids": ["dv_treasury_sample"],
+      "metrics": [{"name": "tx_count", "params": {}}],
+      "dimensions": [],
+      "filters": [
+        {"column": "tx_status", "op": "=", "value": "success"}
+      ],
+      "time": {
+        "column": "block_time",
+        "start": "2026-08-01",
+        "end": "2026-08-31",
+        "grain": "month"
+      },
+      "comparison": {"kind": "none"}
+    },
+    "expected_metrics": {
+      "tx_count": "144"
+    },
+    "expected_window": {
+      "start": "2026-08-01",
+      "end": "2026-08-31"
+    },
+    "notes": "Exact count of successful transactions in August 2026"
+  },
+  {
+    "id": "unique_counterparties",
+    "question": "How many distinct counterparties did we transact with last month?",
+    "spec": {
+      "dataset_version_ids": ["dv_treasury_sample"],
+      "metrics": [{"name": "unique_counterparties", "params": {}}],
+      "dimensions": [],
+      "filters": [
+        {"column": "tx_status", "op": "=", "value": "success"}
+      ],
+      "time": {
+        "column": "block_time",
+        "start": "2026-08-01",
+        "end": "2026-08-31",
+        "grain": "month"
+      },
+      "comparison": {"kind": "none"}
+    },
+    "expected_metrics": {
+      "unique_counterparties": "30"
+    },
+    "expected_window": {
+      "start": "2026-08-01",
+      "end": "2026-08-31"
+    },
+    "notes": "Distinct non-null counterparties in August 2026"
+  },
+  {
+    "id": "month_over_month_outflow_change",
+    "question": "How did our outflow change compared to the previous month?",
+    "spec": {
+      "dataset_version_ids": ["dv_treasury_sample"],
+      "metrics": [{"name": "outflow_usd", "params": {}}],
+      "dimensions": [],
+      "filters": [
+        {"column": "tx_status", "op": "=", "value": "success"}
+      ],
+      "time": {
+        "column": "block_time",
+        "start": "2026-08-01",
+        "end": "2026-08-31",
+        "grain": "month"
+      },
+      "comparison": {
+        "kind": "period_over_period",
+        "baseline": {
+          "column": "block_time",
+          "start": "2026-07-01",
+          "end": "2026-07-31",
+          "grain": "month"
+        }
+      }
+    },
+    "expected_metrics": {
+      "current_outflow_usd": "4493687.99",
+      "baseline_outflow_usd": "1134405.56",
+      "delta_outflow_usd": "3359282.43",
+      "pct_change": "296.13"
+    },
+    "expected_window": {
+      "start": "2026-08-01",
+      "end": "2026-08-31"
+    },
+    "notes": "August outflow ($4,493,687.99) vs July outflow ($1,134,405.56)"
+  },
+  {
+    "id": "top_5_counterparties_outflow",
+    "question": "Who were our top 5 counterparties by outflow last month?",
+    "spec": {
+      "dataset_version_ids": ["dv_treasury_sample"],
+      "metrics": [{"name": "outflow_usd", "params": {}}],
+      "dimensions": ["counterparty"],
+      "filters": [
+        {"column": "direction", "op": "=", "value": "out"},
+        {"column": "tx_status", "op": "=", "value": "success"}
+      ],
+      "time": {
+        "column": "block_time",
+        "start": "2026-08-01",
+        "end": "2026-08-31",
+        "grain": "month"
+      },
+      "order_by": "outflow_usd",
+      "descending": true,
+      "limit": 5
+    },
+    "expected_metrics": {
+      "top_1_counterparty": "Counterparty_05_903bb13e",
+      "top_1_amount": "3496471.00",
+      "top_2_counterparty": "Counterparty_25_a6c1ad8f",
+      "top_2_amount": "80265.02",
+      "top_3_counterparty": "Counterparty_13_34249d8b",
+      "top_3_amount": "77272.31",
+      "top_4_counterparty": "Counterparty_20_8ba8f837",
+      "top_4_amount": "74414.01",
+      "top_5_counterparty": "Counterparty_22_d1f65e81",
+      "top_5_amount": "73628.00"
+    },
+    "expected_window": {
+      "start": "2026-08-01",
+      "end": "2026-08-31"
+    },
+    "notes": "Top 5 outflow recipients in August 2026"
+  },
+  {
+    "id": "contribution_spike_counterparty",
+    "question": "What was the contribution of the spike counterparty to the outflow increase?",
+    "spec": {
+      "dataset_version_ids": ["dv_treasury_sample"],
+      "metrics": [{"name": "outflow_usd", "params": {}}],
+      "dimensions": ["counterparty"],
+      "contribution_of": "counterparty",
+      "filters": [
+        {"column": "direction", "op": "=", "value": "out"},
+        {"column": "tx_status", "op": "=", "value": "success"}
+      ],
+      "time": {
+        "column": "block_time",
+        "start": "2026-08-01",
+        "end": "2026-08-31",
+        "grain": "month"
+      },
+      "comparison": {
+        "kind": "period_over_period",
+        "baseline": {
+          "column": "block_time",
+          "start": "2026-07-01",
+          "end": "2026-07-31",
+          "grain": "month"
+        }
+      }
+    },
+    "expected_metrics": {
+      "spike_counterparty": "Counterparty_05_903bb13e",
+      "current_amount": "3496471.00",
+      "baseline_amount": "37617.72",
+      "delta": "3458853.28",
+      "share_of_change_pct": "102.96"
+    },
+    "expected_window": {
+      "start": "2026-08-01",
+      "end": "2026-08-31"
+    },
+    "notes": "Counterparty_05_903bb13e accounted for 102.96% of net increase in outflow"
+  },
+  {
+    "id": "outflow_excluding_unpriced_sol",
+    "question": "What was our total USD outflow across all complete months excluding unpriced tokens?",
+    "spec": {
+      "dataset_version_ids": ["dv_treasury_sample"],
+      "metrics": [{"name": "outflow_usd", "params": {}}],
+      "dimensions": [],
+      "filters": [
+        {"column": "price_usd", "op": "not_null"},
+        {"column": "direction", "op": "=", "value": "out"},
+        {"column": "tx_status", "op": "=", "value": "success"}
+      ],
+      "time": {
+        "column": "block_time",
+        "start": "2026-02-01",
+        "end": "2026-08-31",
+        "grain": "month"
+      }
+    },
+    "expected_metrics": {
+      "total_usd_outflow": "10986561.42"
+    },
+    "expected_window": {
+      "start": "2026-02-01",
+      "end": "2026-08-31"
+    },
+    "notes": "Includes only rows with valid price_usd (USDC, USDT); excludes native SOL"
+  },
+  {
+    "id": "runway_valid",
+    "question": "What is our estimated runway in months given a treasury balance of $10,000,000?",
+    "spec": {
+      "dataset_version_ids": ["dv_treasury_sample"],
+      "metrics": [{"name": "runway_months", "params": {"treasury_balance_usd": "10000000.00", "lookback_months": 3}}],
+      "dimensions": [],
+      "filters": [
+        {"column": "tx_status", "op": "=", "value": "success"}
+      ],
+      "time": {
+        "column": "block_time",
+        "start": "2026-06-01",
+        "end": "2026-08-31",
+        "grain": "month"
+      }
+    },
+    "expected_metrics": {
+      "avg_monthly_net_burn_usd": "1735947.50",
+      "runway_months": "5.76"
+    },
+    "expected_window": {
+      "start": "2026-06-01",
+      "end": "2026-08-31"
+    },
+    "notes": "Balance $10,000,000 / avg net burn $1,735,947.50 = 5.76 months"
+  },
+  {
+    "id": "runway_no_burn",
+    "question": "What is our runway if average monthly net flow is positive (net inflow)?",
+    "spec": {
+      "dataset_version_ids": ["dv_treasury_sample"],
+      "metrics": [{"name": "runway_months", "params": {"treasury_balance_usd": "5000000.00"}}],
+      "dimensions": [],
+      "filters": [
+        {"column": "direction", "op": "=", "value": "in"}
+      ]
+    },
+    "expected_metrics": {
+      "runway_status": "infinite",
+      "caveat": "Treasury has net positive cash flow; runway is non-depleting"
+    },
+    "expected_window": {
+      "start": "2026-08-01",
+      "end": "2026-08-31"
+    },
+    "notes": "Zero or negative burn yields infinite/non-depleting runway"
+  },
+  {
+    "id": "runway_incomplete_history",
+    "question": "What is our runway if dataset has incomplete transaction history?",
+    "spec": {
+      "dataset_version_ids": ["dv_treasury_incomplete"],
+      "metrics": [{"name": "runway_months", "params": {}}]
+    },
+    "expected_metrics": {
+      "verdict": "INSUFFICIENT_DATA",
+      "missing": ["complete_history", "current_treasury_balance_usd"]
+    },
+    "expected_window": null,
+    "notes": "Fails sufficiency checks when history is flagged as truncated"
+  }
+]
