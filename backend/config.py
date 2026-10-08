@@ -26,8 +26,8 @@ class Settings(BaseSettings):
     privacy_min_group: int = 10
 
     # Budgets (per request)
-    budget_lookup_tool_calls: int = 4
-    budget_analysis_tool_calls: int = 10
+    budget_lookup_tool_calls: int = 8
+    budget_analysis_tool_calls: int = 15
     budget_investigation_tool_calls: int = 25
     budget_max_output_tokens: int = 4000
 
