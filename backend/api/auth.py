@@ -219,6 +219,104 @@ def verify_signature(
     return VerifyResponse(token=token, workspace_id=workspace.id)
 
 
+@router.post("/demo", response_model=VerifyResponse)
+def demo_login(
+    session: Annotated[Session, Depends(get_session)],
+) -> VerifyResponse:
+    """Issue authenticated session for Demo Workspace with preloaded treasury fixture."""
+    demo_wallet = "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+    now = datetime.now(timezone.utc)
+    wk_stmt = select(Workspace).where(Workspace.wallet_address == demo_wallet)
+    workspace = session.exec(wk_stmt).first()
+    if not workspace:
+        workspace = Workspace(
+            wallet_address=demo_wallet,
+            name="Demo Treasury Workspace",
+        )
+        session.add(workspace)
+        session.commit()
+        session.refresh(workspace)
+
+    # Pre-seed treasury fixture if no dataset exists
+    from backend.db.models import Dataset
+    ds_stmt = select(Dataset).where(Dataset.workspace_id == workspace.id)
+    existing_ds = session.exec(ds_stmt).first()
+    if not existing_ds:
+        from pathlib import Path
+        import json
+        import pandas as pd
+        from backend.core.ids import generate_id
+        from backend.core.hashing import canonical_table_hash
+        from backend.core.time_anchor import get_last_complete_month
+        from backend.db.models import DatasetVersion, DataDictionaryEntry
+        from backend.profile.profiler import profile_dataset
+        from backend.semantic.dictionary import propose_dictionary
+
+        fixture_csv = Path("fixtures/treasury_sample.csv")
+        if fixture_csv.exists():
+            df = pd.read_csv(fixture_csv)
+            dataset_id = generate_id("ds")
+            version_id = generate_id("dv")
+            out_dir = Path(settings.data_dir) / "datasets" / dataset_id
+            out_dir.mkdir(parents=True, exist_ok=True)
+            parquet_path = str(out_dir / "data.parquet")
+            df.to_parquet(parquet_path, engine="pyarrow", index=False)
+            content_hash = canonical_table_hash(df)
+
+            ds = Dataset(
+                id=dataset_id,
+                workspace_id=workspace.id,
+                name="Solana Treasury Sample",
+                kind="onchain",
+            )
+            session.add(ds)
+            session.commit()
+
+            # Profile & Dictionary
+            prof = profile_dataset(df)
+            dict_entries = propose_dictionary(df, dataset_version_id=version_id)
+
+            max_dt = pd.to_datetime(df["block_time"]).max().to_pydatetime()
+            time_anchor_date, _ = get_last_complete_month(max_dt.date())
+            anchor_dt = datetime.combine(time_anchor_date, datetime.min.time(), tzinfo=timezone.utc)
+
+            ver = DatasetVersion(
+                id=version_id,
+                dataset_id=dataset_id,
+                row_count=len(df),
+                file_size_bytes=fixture_csv.stat().st_size,
+                parquet_path=parquet_path,
+                content_hash=content_hash,
+                profile_json=json.dumps(prof),
+                time_anchor=anchor_dt,
+            )
+            session.add(ver)
+            session.commit()
+
+            for d in dict_entries:
+                session.add(
+                    DataDictionaryEntry(
+                        dataset_id=dataset_id,
+                        column_name=d.get("column") or d.get("column_name", ""),
+                        role=d.get("role", "dimension"),
+                        unit=d.get("unit"),
+                        is_pii=bool(d.get("is_pii") or (d.get("pii") and d.get("pii") != "none")),
+                        description=d.get("description"),
+                    )
+                )
+            session.commit()
+
+    token_exp = now + timedelta(days=7)
+    jwt_payload = {
+        "sub": demo_wallet,
+        "workspace_id": workspace.id,
+        "iat": int(now.timestamp()),
+        "exp": int(token_exp.timestamp()),
+    }
+    token = jwt.encode(jwt_payload, settings.jwt_secret, algorithm="HS256")
+    return VerifyResponse(token=token, workspace_id=workspace.id)
+
+
 def get_current_workspace(
     credentials: Annotated[Optional[HTTPAuthorizationCredentials], Depends(security)],
     session: Annotated[Session, Depends(get_session)],
