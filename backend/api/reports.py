@@ -110,7 +110,7 @@ def get_report(
 @router.get("/reports/{report_id}/export")
 def export_report(
     report_id: str,
-    format: str = Query(default="md", regex="^(md|pdf)$"),
+    format: str = Query(default="md", pattern="^(md|pdf)$"),
     workspace: Workspace = Depends(get_current_workspace),
     session: Session = Depends(get_session),
 ) -> Response:
