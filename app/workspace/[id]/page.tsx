@@ -1,6 +1,6 @@
 "use client";
 
-import React, { use, useEffect, useState } from "react";
+import React, { Suspense, use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useWallet } from "@/lib/wallet/provider";
 import {
@@ -20,15 +20,14 @@ interface WorkspacePageProps {
   params: Promise<{ id: string }>;
 }
 
-export default function WorkspaceSessionPage({ params }: WorkspacePageProps) {
+function WorkspaceSessionContent({ params }: WorkspacePageProps) {
   const resolvedParams = use(params);
   const sessionId = resolvedParams.id;
   const router = useRouter();
-  const { cluster, connected, connectDemo } = useWallet();
+  const { cluster } = useWallet();
 
   const [datasets, setDatasets] = useState<DatasetItem[]>([]);
   const [activeDatasetId, setActiveDatasetId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
 
   // Inspector & modal states
   const [selectedFinding, setSelectedFinding] = useState<FindingItem | null>(null);
@@ -46,8 +45,6 @@ export default function WorkspaceSessionPage({ params }: WorkspacePageProps) {
       }
     } catch (err) {
       console.warn("Failed to load datasets:", err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -119,5 +116,19 @@ export default function WorkspaceSessionPage({ params }: WorkspacePageProps) {
         />
       )}
     </div>
+  );
+}
+
+export default function WorkspaceSessionPage({ params }: WorkspacePageProps) {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center bg-[#090a0f]">
+          <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
+        </div>
+      }
+    >
+      <WorkspaceSessionContent params={params} />
+    </Suspense>
   );
 }
