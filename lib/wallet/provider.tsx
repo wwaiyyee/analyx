@@ -7,7 +7,7 @@ import React, {
   useEffect,
   useState,
 } from "react";
-import { clearStoredToken, getStoredToken, getStoredWorkspaceId } from "../api";
+import { api, clearStoredToken, getStoredToken, getStoredWorkspaceId } from "../api";
 import { signInWithWallet } from "./sign-in";
 
 interface PhantomProvider {
@@ -46,7 +46,7 @@ export interface WalletContextType {
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
 // Deterministic mock keypair for demo mode when no extension is installed
-const DEMO_WALLET_PUBLIC_KEY = "Analyx111111111111111111111111111111111111";
+const DEMO_WALLET_PUBLIC_KEY = "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU";
 
 export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [publicKey, setPublicKey] = useState<string | null>(null);
@@ -107,20 +107,13 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const connectDemo = useCallback(async () => {
     setConnecting(true);
     try {
-      // Demo authentication mock signature
-      const demoSignFn = async (_msg: Uint8Array): Promise<Uint8Array> => {
-        // Return 64 zero-bytes for mock signature if backend mock enabled,
-        // or a dummy ed25519 signature
-        return new Uint8Array(64);
-      };
-
       setPublicKey(DEMO_WALLET_PUBLIC_KEY);
       try {
-        const authRes = await signInWithWallet(DEMO_WALLET_PUBLIC_KEY, demoSignFn);
+        const authRes = await api.auth.demo();
         setToken(authRes.token);
-        setWorkspaceId(authRes.workspaceId);
-      } catch {
-        // In local/demo offline mode, allow local workspace access
+        setWorkspaceId(authRes.workspace_id);
+      } catch (err) {
+        console.warn("Backend demo login failed, fallback to local:", err);
         setToken("demo_token_workspace");
         setWorkspaceId("ws_demo_analyx");
       }
