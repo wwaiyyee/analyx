@@ -28,7 +28,7 @@ lint:
 
 # Run P0 eval subset
 evals:
-	cd backend && python -m pytest tests/ -v -m eval
+	python evals/run_evals.py
 
 # Load fixtures and create demo workspace
 seed:
